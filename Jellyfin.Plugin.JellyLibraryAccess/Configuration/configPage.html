@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html>
+<head><title>JellyLibraryAccess</title></head>
+<body>
+<div id="JellyLibraryAccessConfigPage" data-role="page" class="page type-interior pluginConfigurationPage">
+  <div data-role="content"><div class="content-primary">
+    <h2>JellyLibraryAccess</h2>
+    <p>Approve individual movies without moving or duplicating files. The plugin uses Jellyfin's Allowed Tags filter underneath and keeps approvals attached to TMDb/IMDb IDs so Radarr upgrades are safe.</p>
+    <form id="JellyLibraryAccessForm">
+      <div class="inputContainer"><label class="inputLabel" for="ApprovalTag">Approval tag</label><input is="emby-input" id="ApprovalTag" type="text" /></div>
+      <h3>Libraries already safe for the kids</h3>
+      <p>Select the existing Kids Movies library (and any other libraries the child should always retain). The plugin automatically applies the approval tag to every movie in these libraries.</p>
+      <div id="libraries"></div>
+      <label class="checkboxContainer"><input is="emby-checkbox" type="checkbox" id="RemoveOrphans"><span>Remove stray approval tags from unapproved movies</span></label>
+      <button is="emby-button" type="submit" class="raised button-submit block"><span>Save</span></button>
+      <button is="emby-button" type="button" id="SyncNow" class="raised block"><span>Sync tags now</span></button>
+    </form>
+    <hr />
+    <h3>Approve a movie</h3>
+    <div class="inputContainer"><label class="inputLabel" for="MovieSearch">Search all movies</label><input is="emby-input" id="MovieSearch" type="search" placeholder="e.g. The Matrix" /></div>
+    <div id="results"></div>
+    <hr />
+    <h3>One-time child user setup</h3>
+    <p>In Dashboard → Users → your child: give access to both <b>Kids Movies</b> and <b>Movies</b>, then set <b>Allowed Tags</b> to the approval tag above. All normal Movies remain hidden because they do not carry that tag; the Kids Movies library remains visible because this plugin keeps it tagged automatically.</p>
+  </div></div>
+</div>
+<script type="text/javascript">
+(function () {
+  const pluginId = '7e742cf9-6457-4c26-96db-62d70adc9f90';
+  const page = document.querySelector('#JellyLibraryAccessConfigPage');
+  let cfg;
+  function api(path, method) { return ApiClient.ajax({type: method || 'GET', url: ApiClient.getUrl(path)}); }
+  function esc(s){ const d=document.createElement('div'); d.textContent=s||''; return d.innerHTML; }
+  async function load() {
+    Dashboard.showLoadingMsg();
+    cfg = await ApiClient.getPluginConfiguration(pluginId);
+    page.querySelector('#ApprovalTag').value = cfg.ApprovalTag || 'kenay-kids-approved';
+    page.querySelector('#RemoveOrphans').checked = cfg.RemoveOrphanedApprovalTags !== false;
+    const libs = await ApiClient.getVirtualFolders();
+    const host = page.querySelector('#libraries'); host.innerHTML='';
+    libs.forEach(l => {
+      if (!l.ItemId) return;
+      const checked = (cfg.BaselineLibraryIds || []).map(x => (''+x).toLowerCase()).includes((''+l.ItemId).toLowerCase());
+      host.insertAdjacentHTML('beforeend', `<label class="checkboxContainer"><input is="emby-checkbox" type="checkbox" class="baselineLib" value="${esc(l.ItemId)}" ${checked?'checked':''}><span>${esc(l.Name)}</span></label>`);
+    });
+    Dashboard.hideLoadingMsg();
+  }
+  page.addEventListener('pageshow', load);
+  page.querySelector('#JellyLibraryAccessForm').addEventListener('submit', async e => {
+    e.preventDefault(); Dashboard.showLoadingMsg();
+    cfg.ApprovalTag = page.querySelector('#ApprovalTag').value.trim() || 'kenay-kids-approved';
+    cfg.RemoveOrphanedApprovalTags = page.querySelector('#RemoveOrphans').checked;
+    cfg.BaselineLibraryIds = [...page.querySelectorAll('.baselineLib:checked')].map(x => x.value);
+    await ApiClient.updatePluginConfiguration(pluginId, cfg);
+    await api('JellyLibraryAccess/sync','POST');
+    Dashboard.hideLoadingMsg(); Dashboard.alert('Saved and synced.');
+  });
+  page.querySelector('#SyncNow').addEventListener('click', async () => {
+    Dashboard.showLoadingMsg(); const r=await api('JellyLibraryAccess/sync','POST'); Dashboard.hideLoadingMsg();
+    Dashboard.alert(`Sync complete. Tagged ${r.Tagged ?? r.tagged ?? 0}, cleaned ${r.Cleaned ?? r.cleaned ?? 0}.`);
+  });
+  let timer;
+  page.querySelector('#MovieSearch').addEventListener('input', e => {
+    clearTimeout(timer); const q=e.target.value.trim(); if(q.length<2){page.querySelector('#results').innerHTML='';return;}
+    timer=setTimeout(async()=>{
+      const userId=ApiClient.getCurrentUserId();
+      const r=await ApiClient.getItems(userId,{Recursive:true,IncludeItemTypes:'Movie',SearchTerm:q,Limit:25,Fields:'ProviderIds'});
+      const host=page.querySelector('#results'); host.innerHTML='';
+      for(const m of r.Items||[]){
+        const st=await api(`JellyLibraryAccess/status/${m.Id}`,'GET');
+        const approved=!!(st.approved ?? st.Approved);
+        const row=document.createElement('div'); row.style='display:flex;gap:12px;align-items:center;padding:8px 0;border-bottom:1px solid rgba(255,255,255,.1)';
+        row.innerHTML=`<div style="flex:1"><b>${esc(m.Name)}</b>${m.ProductionYear?' ('+m.ProductionYear+')':''}</div><button is="emby-button" class="raised">${approved?'Remove Kids Access':'Allow for Kids'}</button>`;
+        row.querySelector('button').addEventListener('click',async()=>{Dashboard.showLoadingMsg(); await api(`JellyLibraryAccess/approve/${m.Id}`, approved?'DELETE':'POST'); Dashboard.hideLoadingMsg(); page.querySelector('#MovieSearch').dispatchEvent(new Event('input'));});
+        host.appendChild(row);
+      }
+    },300);
+  });
+})();
+</script>
+</body>
+</html>
