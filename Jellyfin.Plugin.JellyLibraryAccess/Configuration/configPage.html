@@ -10,7 +10,7 @@
       <div class="inputContainer"><label class="inputLabel" for="ApprovalTag">Approval tag</label><input is="emby-input" id="ApprovalTag" type="text" /><div class="fieldDescription">Default: jellylibraryaccess-approved. You can change this to suit your server.</div></div>
       <h3>Baseline libraries</h3>
       <p>Select libraries this restricted profile should always retain, such as Kids Movies. The plugin automatically applies the approval tag to every movie in these libraries.</p>
-      <div id="libraries"></div>
+      <div id="libraries"><div class="fieldDescription">Loading libraries…</div></div>
       <label class="checkboxContainer"><input is="emby-checkbox" type="checkbox" id="RemoveOrphans"><span>Remove stray approval tags from unapproved movies</span></label>
       <button is="emby-button" type="submit" class="raised button-submit block"><span>Save</span></button>
       <button is="emby-button" type="button" id="SyncNow" class="raised block"><span>Sync tags now</span></button>
@@ -33,17 +33,23 @@
   function esc(s){ const d=document.createElement('div'); d.textContent=s||''; return d.innerHTML; }
   async function load() {
     Dashboard.showLoadingMsg();
-    cfg = await ApiClient.getPluginConfiguration(pluginId);
-    page.querySelector('#ApprovalTag').value = cfg.ApprovalTag || 'jellylibraryaccess-approved';
-    page.querySelector('#RemoveOrphans').checked = cfg.RemoveOrphanedApprovalTags !== false;
-    const libs = await ApiClient.getVirtualFolders();
-    const host = page.querySelector('#libraries'); host.innerHTML='';
-    libs.forEach(l => {
-      if (!l.ItemId) return;
-      const checked = (cfg.BaselineLibraryIds || []).map(x => (''+x).toLowerCase()).includes((''+l.ItemId).toLowerCase());
-      host.insertAdjacentHTML('beforeend', `<label class="checkboxContainer"><input is="emby-checkbox" type="checkbox" class="baselineLib" value="${esc(l.ItemId)}" ${checked?'checked':''}><span>${esc(l.Name)}</span></label>`);
-    });
-    Dashboard.hideLoadingMsg();
+    try {
+      cfg = await ApiClient.getPluginConfiguration(pluginId);
+      page.querySelector('#ApprovalTag').value = cfg.ApprovalTag || 'jellylibraryaccess-approved';
+      page.querySelector('#RemoveOrphans').checked = cfg.RemoveOrphanedApprovalTags !== false;
+      const libs = await ApiClient.ajax({type:'GET', url:ApiClient.getUrl('Library/VirtualFolders'), dataType:'json'});
+      const host = page.querySelector('#libraries'); host.innerHTML='';
+      (libs || []).forEach(l => {
+        const id = l.ItemId || l.Id;
+        if (!id) return;
+        const checked = (cfg.BaselineLibraryIds || []).map(x => (''+x).replace(/-/g,'').toLowerCase()).includes((''+id).replace(/-/g,'').toLowerCase());
+        host.insertAdjacentHTML('beforeend', `<label class="checkboxContainer"><input is="emby-checkbox" type="checkbox" class="baselineLib" value="${esc(id)}" ${checked?'checked':''}><span>${esc(l.Name)}</span></label>`);
+      });
+      if (!host.children.length) host.innerHTML='<div class="fieldDescription">No selectable libraries were returned by Jellyfin.</div>';
+    } catch(err) {
+      console.error('JellyLibraryAccess: failed to load configuration/libraries', err);
+      page.querySelector('#libraries').innerHTML='<div class="fieldDescription">Could not load libraries. Check the Jellyfin server log for JellyLibraryAccess.</div>';
+    } finally { Dashboard.hideLoadingMsg(); }
   }
   page.addEventListener('pageshow', load);
   page.querySelector('#JellyLibraryAccessForm').addEventListener('submit', async e => {
