@@ -11,9 +11,9 @@
         "version": "0.1.1.0",
         "changelog": "Fix baseline library discovery on Jellyfin 10.11.x.",
         "targetAbi": "10.11.9.0",
-        "sourceUrl": "https://github.com/kenayK/JellyLibraryAccess/releases/download/v0.1.1/JellyLibraryAccess-jf10.11.9.zip",
-        "checksum": "3756C7DC44D42B567271C059ED757FB9",
-        "timestamp": "2026-08-15T08:28:54Z"
+        "sourceUrl": "https://github.com/kenayK/JellyLibraryAccess/releases/download/v0.1.1/JellyLibraryAccess_0.1.1.0.zip",
+        "checksum": "589E1E3B0EE741628E025F7912DBD33A",
+        "timestamp": "2026-08-15T08:35:16Z"
       },
       {
         "version": "0.1.0.0",
