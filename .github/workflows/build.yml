@@ -1,0 +1,30 @@
+name: Build JellyLibraryAccess
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '9.0.x'
+      - name: Restore
+        run: dotnet restore Jellyfin.Plugin.JellyLibraryAccess/Jellyfin.Plugin.JellyLibraryAccess.csproj
+      - name: Publish
+        run: dotnet publish Jellyfin.Plugin.JellyLibraryAccess/Jellyfin.Plugin.JellyLibraryAccess.csproj -c Release --no-restore -o publish
+      - name: Package
+        run: |
+          mkdir package
+          cp publish/Jellyfin.Plugin.JellyLibraryAccess.dll package/
+          cd package
+          zip -r ../JellyLibraryAccess-jf10.11.9.zip .
+      - uses: actions/upload-artifact@v4
+        with:
+          name: JellyLibraryAccess-jf10.11.9
+          path: JellyLibraryAccess-jf10.11.9.zip
