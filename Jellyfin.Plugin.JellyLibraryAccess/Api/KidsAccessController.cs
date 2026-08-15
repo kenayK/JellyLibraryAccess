@@ -1,5 +1,6 @@
 using Jellyfin.Plugin.JellyLibraryAccess.Services;
 using MediaBrowser.Common.Api;
+using MediaBrowser.Controller.Library;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -11,7 +12,24 @@ namespace Jellyfin.Plugin.JellyLibraryAccess.Api;
 public class KidsAccessController : ControllerBase
 {
     private readonly KidsAccessService _service;
-    public KidsAccessController(KidsAccessService service) => _service = service;
+    private readonly ILibraryManager _libraryManager;
+
+    public KidsAccessController(KidsAccessService service, ILibraryManager libraryManager)
+    {
+        _service = service;
+        _libraryManager = libraryManager;
+    }
+
+    [HttpGet("libraries")]
+    public ActionResult<object> Libraries()
+    {
+        var libraries = _libraryManager.GetVirtualFolders()
+            .Where(x => !string.IsNullOrWhiteSpace(x.Name) && x.ItemId != Guid.Empty)
+            .Select(x => new { id = x.ItemId, name = x.Name })
+            .OrderBy(x => x.name)
+            .ToArray();
+        return Ok(libraries);
+    }
 
     [HttpGet("status/{itemId:guid}")]
     public async Task<ActionResult<object>> Status(Guid itemId, CancellationToken cancellationToken) =>
