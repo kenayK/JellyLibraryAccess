@@ -24,8 +24,8 @@ public class KidsAccessController : ControllerBase
     public ActionResult<object> Libraries()
     {
         var libraries = _libraryManager.GetVirtualFolders()
-            .Where(x => !string.IsNullOrWhiteSpace(x.Name) && x.ItemId != Guid.Empty)
-            .Select(x => new { id = x.ItemId, name = x.Name })
+            .Where(x => !string.IsNullOrWhiteSpace(x.Name) && Guid.TryParse(x.ItemId, out _))
+            .Select(x => new { id = Guid.Parse(x.ItemId), name = x.Name })
             .OrderBy(x => x.name)
             .ToArray();
         return Ok(libraries);
