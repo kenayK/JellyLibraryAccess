@@ -8,6 +8,14 @@
     "category": "General",
     "versions": [
       {
+        "version": "0.1.6.0",
+        "changelog": "Fix configuration page lifecycle so settings and baseline libraries load correctly.",
+        "targetAbi": "10.11.9.0",
+        "sourceUrl": "https://github.com/kenayK/JellyLibraryAccess/releases/download/v0.1.6/JellyLibraryAccess_0.1.6.0.zip",
+        "checksum": "DFFEB559838C4C2BF1AD89E188C25100",
+        "timestamp": "2026-08-15T09:53:16Z"
+      },
+      {
         "version": "0.1.5.0",
         "changelog": "Fix configuration-page localization collisions so baseline libraries and dynamic controls render correctly.",
         "targetAbi": "10.11.9.0",
