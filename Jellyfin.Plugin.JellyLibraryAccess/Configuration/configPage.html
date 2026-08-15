@@ -5,11 +5,11 @@
 <div id="JellyLibraryAccessConfigPage" data-role="page" class="page type-interior pluginConfigurationPage">
   <div data-role="content"><div class="content-primary">
     <h2>JellyLibraryAccess</h2>
-    <p>Approve individual movies without moving or duplicating files. The plugin uses Jellyfin's Allowed Tags filter underneath and keeps approvals attached to TMDb/IMDb IDs so Radarr upgrades are safe.</p>
+    <p>Approve individual movies for a restricted profile without moving or duplicating files. The plugin uses Jellyfin's Allowed Tags filter and keeps approvals attached to TMDb/IMDb IDs so Radarr upgrades are safe.</p>
     <form id="JellyLibraryAccessForm">
-      <div class="inputContainer"><label class="inputLabel" for="ApprovalTag">Approval tag</label><input is="emby-input" id="ApprovalTag" type="text" /></div>
-      <h3>Libraries already safe for the kids</h3>
-      <p>Select the existing Kids Movies library (and any other libraries the child should always retain). The plugin automatically applies the approval tag to every movie in these libraries.</p>
+      <div class="inputContainer"><label class="inputLabel" for="ApprovalTag">Approval tag</label><input is="emby-input" id="ApprovalTag" type="text" /><div class="fieldDescription">Default: jellylibraryaccess-approved. You can change this to suit your server.</div></div>
+      <h3>Baseline libraries</h3>
+      <p>Select libraries this restricted profile should always retain, such as Kids Movies. The plugin automatically applies the approval tag to every movie in these libraries.</p>
       <div id="libraries"></div>
       <label class="checkboxContainer"><input is="emby-checkbox" type="checkbox" id="RemoveOrphans"><span>Remove stray approval tags from unapproved movies</span></label>
       <button is="emby-button" type="submit" class="raised button-submit block"><span>Save</span></button>
@@ -20,8 +20,8 @@
     <div class="inputContainer"><label class="inputLabel" for="MovieSearch">Search all movies</label><input is="emby-input" id="MovieSearch" type="search" placeholder="e.g. The Matrix" /></div>
     <div id="results"></div>
     <hr />
-    <h3>One-time child user setup</h3>
-    <p>In Dashboard → Users → your child: give access to both <b>Kids Movies</b> and <b>Movies</b>, then set <b>Allowed Tags</b> to the approval tag above. All normal Movies remain hidden because they do not carry that tag; the Kids Movies library remains visible because this plugin keeps it tagged automatically.</p>
+    <h3>One-time restricted user setup</h3>
+    <p>In Dashboard → Users → the restricted profile: give access to both the baseline library and any other library from which you want to approve individual titles, then set <b>Allowed Tags</b> to the approval tag above. Unapproved movies remain hidden because they do not carry that tag; baseline libraries remain visible because this plugin keeps them tagged automatically.</p>
   </div></div>
 </div>
 <script type="text/javascript">
@@ -34,7 +34,7 @@
   async function load() {
     Dashboard.showLoadingMsg();
     cfg = await ApiClient.getPluginConfiguration(pluginId);
-    page.querySelector('#ApprovalTag').value = cfg.ApprovalTag || 'kenay-kids-approved';
+    page.querySelector('#ApprovalTag').value = cfg.ApprovalTag || 'jellylibraryaccess-approved';
     page.querySelector('#RemoveOrphans').checked = cfg.RemoveOrphanedApprovalTags !== false;
     const libs = await ApiClient.getVirtualFolders();
     const host = page.querySelector('#libraries'); host.innerHTML='';
@@ -48,7 +48,7 @@
   page.addEventListener('pageshow', load);
   page.querySelector('#JellyLibraryAccessForm').addEventListener('submit', async e => {
     e.preventDefault(); Dashboard.showLoadingMsg();
-    cfg.ApprovalTag = page.querySelector('#ApprovalTag').value.trim() || 'kenay-kids-approved';
+    cfg.ApprovalTag = page.querySelector('#ApprovalTag').value.trim() || 'jellylibraryaccess-approved';
     cfg.RemoveOrphanedApprovalTags = page.querySelector('#RemoveOrphans').checked;
     cfg.BaselineLibraryIds = [...page.querySelectorAll('.baselineLib:checked')].map(x => x.value);
     await ApiClient.updatePluginConfiguration(pluginId, cfg);
@@ -70,7 +70,7 @@
         const st=await api(`JellyLibraryAccess/status/${m.Id}`,'GET');
         const approved=!!(st.approved ?? st.Approved);
         const row=document.createElement('div'); row.style='display:flex;gap:12px;align-items:center;padding:8px 0;border-bottom:1px solid rgba(255,255,255,.1)';
-        row.innerHTML=`<div style="flex:1"><b>${esc(m.Name)}</b>${m.ProductionYear?' ('+m.ProductionYear+')':''}</div><button is="emby-button" class="raised">${approved?'Remove Kids Access':'Allow for Kids'}</button>`;
+        row.innerHTML=`<div style="flex:1"><b>${esc(m.Name)}</b>${m.ProductionYear?' ('+m.ProductionYear+')':''}</div><button is="emby-button" class="raised">${approved?'Remove Access':'Allow Access'}</button>`;
         row.querySelector('button').addEventListener('click',async()=>{Dashboard.showLoadingMsg(); await api(`JellyLibraryAccess/approve/${m.Id}`, approved?'DELETE':'POST'); Dashboard.hideLoadingMsg(); page.querySelector('#MovieSearch').dispatchEvent(new Event('input'));});
         host.appendChild(row);
       }
