@@ -8,6 +8,14 @@
     "category": "General",
     "versions": [
       {
+        "version": "0.1.7.0",
+        "changelog": "Separate configuration saving from tag synchronization. Save no longer changes movie metadata.",
+        "targetAbi": "10.11.9.0",
+        "sourceUrl": "https://github.com/kenayK/JellyLibraryAccess/releases/download/v0.1.7/JellyLibraryAccess_0.1.7.0.zip",
+        "checksum": "349C266A8B0F2691FDBD47B8A8533FA9",
+        "timestamp": "2026-08-15T09:59:55Z"
+      },
+      {
         "version": "0.1.6.0",
         "changelog": "Fix configuration page lifecycle so settings and baseline libraries load correctly.",
         "targetAbi": "10.11.9.0",
