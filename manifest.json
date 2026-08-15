@@ -12,8 +12,8 @@
         "changelog": "Initial release. Per-title approval, baseline Kids library tagging, persistent TMDb/IMDb matching and automatic re-sync after library changes.",
         "targetAbi": "10.11.9.0",
         "sourceUrl": "https://github.com/kenayK/JellyLibraryAccess/releases/download/v0.1.0/JellyLibraryAccess-jf10.11.9.zip",
-        "checksum": "F6EBABA6DFC764DC4773808E71B458A0",
-        "timestamp": "2026-08-15T08:15:57Z"
+        "checksum": "01FA904A4D1BEC91CF760DEB6C4DC70C",
+        "timestamp": "2026-08-15T08:24:59Z"
       }
     ]
   }
