@@ -12,8 +12,8 @@
         "changelog": "Use Jellyfin VirtualFolderInfo contract and plugin-owned settings API for baseline library selection.",
         "targetAbi": "10.11.9.0",
         "sourceUrl": "https://github.com/kenayK/JellyLibraryAccess/releases/download/v0.1.4/JellyLibraryAccess_0.1.4.0.zip",
-        "checksum": "442D14AAC5691E78D45EA3038DEEA0A7",
-        "timestamp": "2026-08-15T09:26:58Z"
+        "checksum": "7A91DA285DB64E1046DEB957B7403193",
+        "timestamp": "2026-08-15T09:43:35Z"
       },
       {
         "version": "0.1.3.0",
