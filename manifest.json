@@ -2,11 +2,19 @@
   {
     "guid": "7e742cf9-6457-4c26-96db-62d70adc9f90",
     "name": "JellyLibraryAccess",
-    "description": "Approve individual Jellyfin movies for a kids profile without moving media files.",
-    "overview": "Adds a simple approval workflow for exposing individual movies to a child profile while keeping the rest of an adult library hidden.",
+    "description": "Approve individual Jellyfin movies for restricted profiles without moving media files.",
+    "overview": "Per-title library access using Jellyfin Allowed Tags, with persistent TMDb/IMDb matching.",
     "owner": "kenayK",
     "category": "General",
     "versions": [
+      {
+        "version": "0.1.1.0",
+        "changelog": "Fix baseline library discovery on Jellyfin 10.11.x.",
+        "targetAbi": "10.11.9.0",
+        "sourceUrl": "https://github.com/kenayK/JellyLibraryAccess/releases/download/v0.1.1/JellyLibraryAccess-jf10.11.9.zip",
+        "checksum": "3756C7DC44D42B567271C059ED757FB9",
+        "timestamp": "2026-08-15T08:28:54Z"
+      },
       {
         "version": "0.1.0.0",
         "changelog": "Initial release. Per-title approval, baseline Kids library tagging, persistent TMDb/IMDb matching and automatic re-sync after library changes.",
