@@ -1,0 +1,101 @@
+name: Publish JellyLibraryAccess Repository
+
+on:
+  push:
+    branches: [ main ]
+    paths-ignore:
+      - manifest.json
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    env:
+      VERSION: 0.1.0
+      JELLYFIN_ABI: 10.11.9.0
+      PACKAGE: JellyLibraryAccess-jf10.11.9.zip
+      PLUGIN_GUID: 7e742cf9-6457-4c26-96db-62d70adc9f90
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '9.0.x'
+
+      - name: Restore
+        run: dotnet restore Jellyfin.Plugin.JellyLibraryAccess/Jellyfin.Plugin.JellyLibraryAccess.csproj
+
+      - name: Publish
+        run: dotnet publish Jellyfin.Plugin.JellyLibraryAccess/Jellyfin.Plugin.JellyLibraryAccess.csproj -c Release --no-restore -o publish
+
+      - name: Package
+        run: |
+          rm -rf package
+          mkdir package
+          cp publish/Jellyfin.Plugin.JellyLibraryAccess.dll package/
+          cd package
+          zip -r ../"$PACKAGE" .
+
+      - name: Calculate checksum
+        id: checksum
+        run: echo "md5=$(md5sum "$PACKAGE" | awk '{print toupper($1)}')" >> "$GITHUB_OUTPUT"
+
+      - name: Create or update GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if gh release view "v$VERSION" >/dev/null 2>&1; then
+            gh release upload "v$VERSION" "$PACKAGE" --clobber
+          else
+            gh release create "v$VERSION" "$PACKAGE" \
+              --title "JellyLibraryAccess v$VERSION" \
+              --notes "Initial JellyLibraryAccess release for Jellyfin 10.11.9."
+          fi
+
+      - name: Generate Jellyfin manifest
+        env:
+          CHECKSUM: ${{ steps.checksum.outputs.md5 }}
+        run: |
+          python3 - <<'PY'
+          import json, os
+          from datetime import datetime, timezone
+
+          version = os.environ['VERSION']
+          package = os.environ['PACKAGE']
+          data = [{
+              "guid": os.environ['PLUGIN_GUID'],
+              "name": "JellyLibraryAccess",
+              "description": "Approve individual Jellyfin movies for a kids profile without moving media files.",
+              "overview": "Adds a simple approval workflow for exposing individual movies to a child profile while keeping the rest of an adult library hidden.",
+              "owner": "kenayK",
+              "category": "General",
+              "versions": [{
+                  "version": version + ".0",
+                  "changelog": "Initial release. Per-title approval, baseline Kids library tagging, persistent TMDb/IMDb matching and automatic re-sync after library changes.",
+                  "targetAbi": os.environ['JELLYFIN_ABI'],
+                  "sourceUrl": f"https://github.com/kenayK/JellyLibraryAccess/releases/download/v{version}/{package}",
+                  "checksum": os.environ['CHECKSUM'],
+                  "timestamp": datetime.now(timezone.utc).replace(microsecond=0).isoformat().replace('+00:00', 'Z')
+              }]
+          }]
+          with open('manifest.json', 'w', encoding='utf-8') as f:
+              json.dump(data, f, indent=2)
+              f.write('\n')
+          PY
+
+      - name: Commit manifest
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add manifest.json
+          if git diff --cached --quiet; then
+            exit 0
+          fi
+          git commit -m "Update Jellyfin plugin manifest for v$VERSION"
+          git push
