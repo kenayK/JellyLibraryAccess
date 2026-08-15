@@ -12,8 +12,8 @@
         "changelog": "Fix baseline library sync using Jellyfin TopParentIds virtual-library scoping.",
         "targetAbi": "10.11.9.0",
         "sourceUrl": "https://github.com/kenayK/JellyLibraryAccess/releases/download/v0.1.8/JellyLibraryAccess_0.1.8.0.zip",
-        "checksum": "B617FEDB0CEE43D25485653C5C712836",
-        "timestamp": "2026-08-15T10:10:07Z"
+        "checksum": "BBFEC507194DFE2A1D1B59DA2870E732",
+        "timestamp": "2026-08-15T10:18:16Z"
       },
       {
         "version": "0.1.7.0",
