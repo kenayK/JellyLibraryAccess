@@ -19,9 +19,9 @@ jobs:
     if: github.actor != 'github-actions[bot]'
     runs-on: ubuntu-latest
     env:
-      VERSION: 0.1.8
+      VERSION: 0.1.9
       JELLYFIN_ABI: 10.11.9.0
-      PACKAGE: JellyLibraryAccess_0.1.8.0.zip
+      PACKAGE: JellyLibraryAccess_0.1.9.0.zip
       PLUGIN_GUID: 7e742cf9-6457-4c26-96db-62d70adc9f90
     steps:
       - uses: actions/checkout@v4
@@ -51,7 +51,7 @@ jobs:
           if gh release view "v$VERSION" >/dev/null 2>&1; then
             gh release upload "v$VERSION" "$PACKAGE" --clobber
           else
-            gh release create "v$VERSION" "$PACKAGE" --title "JellyLibraryAccess v$VERSION" --notes "Fix baseline library synchronization by querying Jellyfin movies with InternalItemsQuery.TopParentIds instead of BaseItem.GetTopParent()."
+            gh release create "v$VERSION" "$PACKAGE" --title "JellyLibraryAccess v$VERSION" --notes "Resolve baseline library membership using Jellyfin ILibraryManager.GetCollectionFolders(item), matching movies to their configured collection folders instead of inferring parent IDs."
           fi
       - name: Generate Jellyfin manifest
         env:
@@ -61,7 +61,7 @@ jobs:
           import json, os
           from datetime import datetime, timezone
           version=os.environ['VERSION']; package=os.environ['PACKAGE']
-          entry={"version":version+".0","changelog":"Fix baseline library sync using Jellyfin TopParentIds virtual-library scoping.","targetAbi":os.environ['JELLYFIN_ABI'],"sourceUrl":f"https://github.com/kenayK/JellyLibraryAccess/releases/download/v{version}/{package}","checksum":os.environ['CHECKSUM'],"timestamp":datetime.now(timezone.utc).replace(microsecond=0).isoformat().replace('+00:00','Z')}
+          entry={"version":version+".0","changelog":"Resolve baseline membership using Jellyfin GetCollectionFolders(item).","targetAbi":os.environ['JELLYFIN_ABI'],"sourceUrl":f"https://github.com/kenayK/JellyLibraryAccess/releases/download/v{version}/{package}","checksum":os.environ['CHECKSUM'],"timestamp":datetime.now(timezone.utc).replace(microsecond=0).isoformat().replace('+00:00','Z')}
           try:
             old=json.load(open('manifest.json',encoding='utf-8'))
             versions=old[0].get('versions',[])
