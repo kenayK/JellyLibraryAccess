@@ -12,8 +12,8 @@
         "changelog": "Fix configuration-page localization collisions so baseline libraries and dynamic controls render correctly.",
         "targetAbi": "10.11.9.0",
         "sourceUrl": "https://github.com/kenayK/JellyLibraryAccess/releases/download/v0.1.5/JellyLibraryAccess_0.1.5.0.zip",
-        "checksum": "0D9EC2338C078B9DB200B4AC9CBFA614",
-        "timestamp": "2026-08-15T09:44:14Z"
+        "checksum": "F8BC60BA29A8C5899CD28E056E6269E0",
+        "timestamp": "2026-08-15T09:52:42Z"
       },
       {
         "version": "0.1.4.0",
