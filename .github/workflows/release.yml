@@ -17,7 +17,7 @@ jobs:
     env:
       VERSION: 0.1.1
       JELLYFIN_ABI: 10.11.9.0
-      PACKAGE: JellyLibraryAccess-jf10.11.9.zip
+      PACKAGE: JellyLibraryAccess_0.1.1.0.zip
       PLUGIN_GUID: 7e742cf9-6457-4c26-96db-62d70adc9f90
     steps:
       - uses: actions/checkout@v4
