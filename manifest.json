@@ -8,6 +8,14 @@
     "category": "General",
     "versions": [
       {
+        "version": "0.1.5.0",
+        "changelog": "Fix configuration-page localization collisions so baseline libraries and dynamic controls render correctly.",
+        "targetAbi": "10.11.9.0",
+        "sourceUrl": "https://github.com/kenayK/JellyLibraryAccess/releases/download/v0.1.5/JellyLibraryAccess_0.1.5.0.zip",
+        "checksum": "0D9EC2338C078B9DB200B4AC9CBFA614",
+        "timestamp": "2026-08-15T09:44:14Z"
+      },
+      {
         "version": "0.1.4.0",
         "changelog": "Use Jellyfin VirtualFolderInfo contract and plugin-owned settings API for baseline library selection.",
         "targetAbi": "10.11.9.0",
