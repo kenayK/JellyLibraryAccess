@@ -26,10 +26,8 @@ public class KidsAccessService
         if (item is null) return false;
         var config = Plugin.Instance?.Configuration;
         if (config is null) return false;
-
-        var baselineMovieIds = GetBaselineMovieIds(config.BaselineLibraryIds);
         return HasTag(item, config.ApprovalTag) &&
-               (baselineMovieIds.Contains(item.Id) || config.ApprovedMovies.Any(a => Matches(a, item)));
+               (IsBaseline(item, config.BaselineLibraryIds) || config.ApprovedMovies.Any(a => Matches(a, item)));
     }
 
     public async Task<MovieApproval> ApproveAsync(Guid itemId, CancellationToken cancellationToken)
@@ -63,11 +61,8 @@ public class KidsAccessService
             var item = _libraryManager.GetItemById(itemId) ?? throw new KeyNotFoundException("Movie not found.");
             config.ApprovedMovies.RemoveAll(a => Matches(a, item));
             plugin.UpdateConfiguration(config);
-
-            var baselineMovieIds = GetBaselineMovieIds(config.BaselineLibraryIds);
-            if (!baselineMovieIds.Contains(item.Id))
+            if (!IsBaseline(item, config.BaselineLibraryIds))
                 await RemoveTagAsync(item, config.ApprovalTag, cancellationToken).ConfigureAwait(false);
-
             _logger.LogInformation("Revoked kids access for {Movie}", item.Name);
         }
         finally { _gate.Release(); }
@@ -87,10 +82,10 @@ public class KidsAccessService
                 GroupByPresentationUniqueKey = false
             });
 
-            // Jellyfin exposes configured virtual-folder ItemIds as the top-parent IDs used
-            // by InternalItemsQuery. Query baseline membership directly instead of walking
-            // BaseItem.GetTopParent(), which does not reliably represent virtual-library membership.
-            var baselineMovieIds = GetBaselineMovieIds(config.BaselineLibraryIds);
+            var baselineMovieIds = movies
+                .Where(movie => IsBaseline(movie, config.BaselineLibraryIds))
+                .Select(movie => movie.Id)
+                .ToHashSet();
 
             var tagged = 0;
             var cleaned = 0;
@@ -128,17 +123,11 @@ public class KidsAccessService
         finally { _gate.Release(); }
     }
 
-    private HashSet<Guid> GetBaselineMovieIds(IReadOnlyCollection<Guid> baselineLibraryIds)
+    private bool IsBaseline(BaseItem item, IReadOnlyCollection<Guid> baselineLibraryIds)
     {
-        if (baselineLibraryIds.Count == 0) return [];
-
-        return _libraryManager.GetItemList(new InternalItemsQuery
-        {
-            IncludeItemTypes = [BaseItemKind.Movie],
-            Recursive = true,
-            TopParentIds = baselineLibraryIds.ToArray(),
-            GroupByPresentationUniqueKey = false
-        }).Select(item => item.Id).ToHashSet();
+        if (baselineLibraryIds.Count == 0) return false;
+        var collectionFolders = _libraryManager.GetCollectionFolders(item);
+        return collectionFolders.Any(folder => baselineLibraryIds.Contains(folder.Id));
     }
 
     private static MovieApproval CreateApproval(BaseItem item) => new()
